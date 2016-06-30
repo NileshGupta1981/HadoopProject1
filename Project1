@@ -1,0 +1,25 @@
+loadfile = load 'demo' using org.apache.pig.piggybank.storage.CSVExcelStorage(',','NO_MULTILINE','UNIX','SKIP_INPUT_HEADER');
+timelyresponse= filter loadfile by UPPER($13)=='YES';
+timelyresponsegrp = group timelyresponse all;
+timelyresponsecount= foreach timelyresponsegrp generate 'Count of Timely Response', COUNT(timelyresponse);
+store timelyresponsecount into 'countoftimelyresponse';
+
+dateformat = foreach loadfile generate CONCAT($0,' 01:00:00'),CONCAT($11,' 01:00:00');
+dateconversion = foreach dateformat generate ToDate($0,'mm/dd/yyyy hh:mm:ss'),ToDate($1,'mm/dd/yyyy hh:mm:ss');
+datesent = filter dateconversion by $0 == $1;
+datecountgrp =  group datesent all;
+datecount = foreach datecountgrp generate 'No of records', COUNT(datesent);
+store datecount into 'datecount';
+
+
+companygrp = group loadfile by $7;
+complaincount = foreach companygrp generate group , COUNT(loadfile) as complain_count;
+companyorder = order complaincount by complain_count desc;
+companyname = limit companyorder 1;
+store companyname into 'companyname';
+
+
+compaintfiled = filter loadfile by (($0 matches '.*2015')AND( $1 == 'Debt collection'));
+
+store compaintfiled into 'compailntfiled';
+
